@@ -112,51 +112,6 @@ def mot_from_letters(string, mots):
 def all_mot(l_jeu, l_plateau, mots, min_len=3, nb_aff=5):
     """A partir des lettres de 'l_jeu', propose des mots du dictionnaires
     pouvant être formés"""
-    print("##############################################################")
-    if l_plateau:
-        let_p = l_plateau.pop()
-        print("Mots possibles avec la lettre du plateau '{}':".format(let_p))
-        all_mot(l_jeu + [let_p], False, mots, min_len, nb_aff) 
-        all_mot(l_jeu, l_plateau, mots, min_len, nb_aff) 
-    else:
-        print('Lettres : {}'.format(l_jeu))
-        print()
-        # Set des lettres de l'alphabet non présentes dans 'l_jeu'
-        out_let = set('abcdefghijklmnopqrstuvwxyz') - set(l_jeu)
-        mot_pot = np.array(mots)
-        # On enleve tous les mots contenant des lettres non présentes en entrée
-        for letter in out_let:
-            mot_pot = mot_pot[[letter not in mot for mot in mot_pot]]
-        # Tri des mots : du plus grand au plus petit
-        lon = np.argsort([len(mot) for mot in mot_pot])
-        mot_pot = list(mot_pot[lon])
-        # Elimination des mots trop petits
-        mot_pot = [mot for mot in mot_pot if len(mot) >= min_len]
-        # Elimination des mots répétant des lettres plus de fois que présentes
-        let, nomb = np.unique(l_jeu, return_counts=True)
-        set_modele = set()
-        for l, n in zip(let, nomb):
-            for i in range(n):
-                set_modele.add(l*(i+1))
-        mot_res = []
-        for mot in mot_pot:
-            let, nomb = np.unique(list(mot), return_counts=True)
-            set_mot = set([l* int(n) for l, n in zip(let, nomb)])
-            if len(set_mot - set_modele) == 0:
-                mot_res.append(mot)
-        # Affichage résultat
-        print("===================================")
-        while mot_res:
-            for i in range(nb_aff):
-                if mot_res:
-                    print(points(mot_res.pop()), end='\t')
-            print()
-        print()
-
-
-def all_mot_bis(l_jeu, l_plateau, mots, min_len=3, nb_aff=5):
-    """A partir des lettres de 'l_jeu', propose des mots du dictionnaires
-    pouvant être formés"""
     def mots_jeu(l_jeu, mots_en_moins=set()):
         # Set des lettres de l'alphabet non présentes dans 'l_jeu'
         out_let = set('abcdefghijklmnopqrstuvwxyz') - set(l_jeu)
@@ -164,12 +119,9 @@ def all_mot_bis(l_jeu, l_plateau, mots, min_len=3, nb_aff=5):
         # On enleve tous les mots contenant des lettres non présentes en entrée
         for letter in out_let:
             mot_pot = mot_pot[[letter not in mot for mot in mot_pot]]
-        # Tri des mots : du plus grand au plus petit
-        lon = np.argsort([len(mot) for mot in mot_pot])
-        mot_pot = list(mot_pot[lon])
         # Elimination des mots trop petits
         mot_pot = [mot for mot in mot_pot if len(mot) >= min_len]
-        # Elimination des mots répétant des lettres plus de fois que présentes
+        # Elimination des mots répétant des lettres plus de fois que disponibles
         let, nomb = np.unique(l_jeu, return_counts=True)
         set_modele = set()
         for l, n in zip(let, nomb):
@@ -181,8 +133,14 @@ def all_mot_bis(l_jeu, l_plateau, mots, min_len=3, nb_aff=5):
             set_mot = set([l* int(n) for l, n in zip(let, nomb)])
             if len(set_mot - set_modele) == 0:
                 mot_res.append(mot)
+        # Elimination de mots donnés en entrée
         mot_res = set(mot_res) - mots_en_moins
         res = mot_res.copy()
+        mot_res = np.array(list(mot_res))
+        # Tri des mots : du plus grand au plus petit
+        if res:
+            lon = np.argsort([len(mot) for mot in mot_res])
+            mot_res = list(mot_res[lon])
         # Affichage résultat
         print("===================================")
         while mot_res:
@@ -201,9 +159,34 @@ def all_mot_bis(l_jeu, l_plateau, mots, min_len=3, nb_aff=5):
         mots_jeu(l_jeu + [let], mots_en_moins=res_jeu)
 
 
+def mots_avec(group_let, mots):
+    l_bool = [True]*len(mots)
+    for i, mot in enumerate(mots):
+        for g_l in group_let:
+            l_bool[i] &= g_l in mot
+
+    return mots[l_bool]
+
+
 # MAIN
 if __name__ == '__main__':
+    lettres_jeu = 'syse'
+    lettres_plateau = 'er'
+    mot = 'stem'
+
     #import_dico()
     mots = load_obj('mots')
-    #all_mot_bis(list('ahjewe'), list('abcdefghijklmnopqrstuvwxyz'), mots, min_len=3, nb_aff=5)
-    all_mot_bis(list('htiolgz'), list('jaek'), mots, min_len=3, nb_aff=5)
+
+    # abcdefghijklmnopqrstuvwxyz
+    # Mots que je peux faire avec mes lettres et certaines lettres du plateau
+    print("###########################")
+    print("GLOBAL")
+    print("###########################")
+    all_mot(list(lettres_jeu), list(lettres_plateau), mots, min_len=2, nb_aff=5)
+
+    # Ce que je peux faire à partir d'un mot existant déjà sur le plateau de jeu
+    print("###########################")
+    print("PARTICULIER - autour du mot : ", mot)
+    print("###########################")
+    a = mots_avec([mot], mots)
+    all_mot(list(lettres_jeu + mot), [], a, min_len=3)
