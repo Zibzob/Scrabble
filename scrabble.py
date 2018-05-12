@@ -170,9 +170,9 @@ def mots_avec(group_let, mots):
 
 # MAIN
 if __name__ == '__main__':
-    lettres_jeu = 'syse'
-    lettres_plateau = 'er'
-    mot = 'stem'
+    lettres_jeu = 'jdoh'
+    lettres_plateau = ''
+    mot = 'laqua'
 
     #import_dico()
     mots = load_obj('mots')
